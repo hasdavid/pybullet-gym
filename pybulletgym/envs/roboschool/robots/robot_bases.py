@@ -117,10 +117,9 @@ class MJCFBasedRobot(XmlBasedRobot):
 			self.doneLoading=1
 			if self.self_collision:
 				self.objects = self._p.loadMJCF(full_path, flags=pybullet.URDF_USE_SELF_COLLISION|pybullet.URDF_USE_SELF_COLLISION_EXCLUDE_ALL_PARENTS)
-				self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects	)
 			else:
 				self.objects = self._p.loadMJCF(full_path)
-				self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
+			self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, self.objects)
 		self.robot_specific_reset(self._p)
 
 		s = self.calc_state()  # optimization: calc_state() can calculate something in self.* for calc_potential() to use
@@ -144,27 +143,33 @@ class URDFBasedRobot(XmlBasedRobot):
 		self.basePosition = basePosition if basePosition is not None else [0, 0, 0]
 		self.baseOrientation = baseOrientation if baseOrientation is not None else [0, 0, 0, 1]
 		self.fixed_base = fixed_base
+		self.loading_done = False
 
 	def reset(self, bullet_client):
 		self._p = bullet_client
-		self.ordered_joints = []
 
-		full_path = os.path.join(os.path.dirname(__file__), "..", "..", "assets", "robots", self.model_urdf)
-		print(full_path)
-
-		if self.self_collision:
-			self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p,
-				self._p.loadURDF(full_path,
-				basePosition=self.basePosition,
-				baseOrientation=self.baseOrientation,
-				useFixedBase=self.fixed_base,
-				flags=pybullet.URDF_USE_SELF_COLLISION))
-		else:
-			self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p,
-				self._p.loadURDF(full_path,
-				basePosition=self.basePosition,
-				baseOrientation=self.baseOrientation,
-				useFixedBase=self.fixed_base))
+		if not self.loading_done:
+			full_path = os.path.join(
+				os.path.dirname(__file__), "..", "..", "assets", "robots", self.model_urdf
+			)
+			self.ordered_joints = []
+			if self.self_collision:
+				objects = self._p.loadURDF(
+					full_path,
+					basePosition=self.basePosition,
+					baseOrientation=self.baseOrientation,
+					useFixedBase=self.fixed_base,
+					flags=pybullet.URDF_USE_SELF_COLLISION
+				)
+			else:
+				objects = self._p.loadURDF(
+					full_path,
+					basePosition=self.basePosition,
+					baseOrientation=self.baseOrientation,
+					useFixedBase=self.fixed_base
+				)
+			self.parts, self.jdict, self.ordered_joints, self.robot_body = self.addToScene(self._p, objects)
+			self.loading_done = True
 
 		self.robot_specific_reset(self._p)
 
