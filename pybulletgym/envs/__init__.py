@@ -1,4 +1,6 @@
+import gym
 from gym.envs.registration import register
+
 
 # roboschool envs
 ## pendula
@@ -156,5 +158,7 @@ register(
 
 
 def get_list():
-	envs = ['- ' + spec.id for spec in gym.pgym.envs.registry.all() if spec.id.find('Bullet') >= 0 or spec.id.find('MuJoCo') >= 0]
+	envs = [
+		'- ' + spec.id for spec in gym.envs.registry.all() if spec.id.find('Bullet') >= 0 or spec.id.find('MuJoCo') >= 0
+	]
 	return envs
